@@ -658,11 +658,12 @@
             try {
                 await fetch(BODACONFIG.endpointRSVP, {
                     method: 'POST', 
-                    body: JSON.stringify(data), 
+                    body: JSON.stringify(data),
+                    mode: 'no-cors', // <--- AGREGADO: Importante para evitar errores de CORS con Google
                     headers: { "Content-Type": "text/plain;charset=utf-8" }
                 });
                 
-                // Éxito
+                // Éxito (Al usar no-cors, asumimos éxito si no hay error de red)
                 document.getElementById('rsvpForm').classList.add('hidden');
                 document.getElementById('welcome-message').classList.add('hidden');
                 document.getElementById('successMessage').classList.remove('hidden');
