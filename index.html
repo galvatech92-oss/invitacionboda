@@ -334,7 +334,7 @@
             }
         }
 
-        // --- RSVP + TRUCO TEXT/PLAIN PARA EVITAR CORS ---
+        // --- RSVP ---
         const btnMinus = document.getElementById('btn-minus');
         const btnPlus = document.getElementById('btn-plus');
         const display = document.getElementById('pases-display');
@@ -354,6 +354,7 @@
             else { label.innerText = "No podré asistir"; detalles.classList.add('opacity-50', 'pointer-events-none'); }
         });
 
+        // --- MANEJO DE FORMULARIO SIN JSON (ESTRATEGIA URLSearchParams) ---
         document.getElementById('rsvpForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
@@ -363,19 +364,27 @@
             btn.disabled = true; text.classList.add('hidden'); loader.classList.remove('hidden');
 
             const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
+            // Convertimos a URLSearchParams para que Apps Script lo reciba como parámetros nativos
+            const data = new URLSearchParams();
+            for (const pair of formData.entries()) {
+                data.append(pair[0], pair[1]);
+            }
             
-            // Ajustar lógica
-            if(!toggle.checked) { data.pases = 0; data.asistencia = "No"; } 
-            else { data.asistencia = "Si"; data.pases = document.getElementById('pases').value; }
+            // Lógica manual
+            if(!toggle.checked) { 
+                data.set('asistencia', 'No');
+                data.set('pases', '0');
+            } else { 
+                data.set('asistencia', 'Si');
+                data.set('pases', document.getElementById('pases').value);
+            }
 
-            // TRUCO DE CORS: Enviar JSON como texto plano
             try {
+                // Enviamos sin Headers raros para que el navegador lo trate como form normal
                 await fetch(BODACONFIG.endpointRSVP, {
                     method: 'POST',
-                    body: JSON.stringify(data),
-                    mode: 'no-cors', // Evita error CORS
-                    headers: { "Content-Type": "text/plain;charset=utf-8" } // Evita Preflight
+                    body: data, 
+                    mode: 'no-cors' 
                 });
                 
                 // Exito
