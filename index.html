@@ -58,6 +58,25 @@
         #flower-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: hidden; }
         .flower { position: absolute; top: -50px; background: linear-gradient(135deg, #f5f5f5, #b0b0b0); border-radius: 50% 0 50% 0; box-shadow: 1px 1px 3px rgba(0,0,0,0.2); opacity: 0.8; animation-name: fall; animation-timing-function: linear; animation-iteration-count: infinite; }
         @keyframes fall { 0% { transform: translateY(0) rotate(0deg) translateX(0); opacity: 0; } 20% { opacity: 0.9; transform: translateY(20vh) rotate(45deg) translateX(20px); } 40% { transform: translateY(40vh) rotate(90deg) translateX(-20px); } 60% { transform: translateY(60vh) rotate(135deg) translateX(20px); } 80% { transform: translateY(80vh) rotate(180deg) translateX(-20px); } 100% { transform: translateY(110vh) rotate(225deg) translateX(0px); opacity: 0; } }
+        
+        /* Estilos para el Log de Debug */
+        #debug-console {
+            background-color: #1a1a1a;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 8px;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 2px solid #333;
+            display: none; /* Oculto por defecto */
+        }
+        .log-entry { margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 2px; }
+        .log-time { color: #888; margin-right: 10px; }
+        .log-error { color: #ff4444; font-weight: bold; }
+        .log-success { color: #00ff00; font-weight: bold; }
     </style>
 </head>
 <body class="font-sans text-gray-700 bg-stone-50 antialiased overflow-x-hidden selection:bg-gold-400 selection:text-white">
@@ -75,7 +94,7 @@
             novios: "Josefina & Fernando",
             fecha: "2026-11-22T16:00:00", 
             ubicacionLink: "https://goo.gl/maps/tu-ubicacion", 
-            // URL DE APPS SCRIPT ACTUALIZADA (LA NUEVA QUE PASASTE)
+            // URL DE APPS SCRIPT
             endpointRSVP: "https://script.google.com/macros/s/AKfycbxGG92_X8P6WfGHiHVbLtBV4-0LCsExevNd2oC9FsdsE_yyD5NRCSqiupz0nd0gQnnh/exec", 
             bankInfo: "Banco X | CLABE: 123456789012345678",
             telefonoNovios: "525512345678" // Para el fallback de WhatsApp (cambiar por el real)
@@ -280,13 +299,41 @@
         <p class="font-script text-3xl text-gold-400 mb-4">Josefina & Fernando</p>
         <p class="text-sm tracking-widest uppercase mb-6">#BodaJosefinaYFer</p>
         <p class="text-xs">Hecho con ♥</p>
+        <!-- BOTÓN DEBUG -->
+        <button onclick="document.getElementById('debug-console').style.display = 'block'" class="text-xs text-white/20 mt-4 hover:text-white/50 underline">Ver Log de Errores</button>
     </footer>
+
+    <!-- CONSOLA DEBUG -->
+    <div id="debug-console">
+        <div class="log-entry">--- INICIO DEL LOG ---</div>
+    </div>
 
     <!-- LOGICA -->
     <script>
         lucide.createIcons();
 
+        // FUNCIÓN LOGGING
+        function logToScreen(msg, type = 'info') {
+            const consoleDiv = document.getElementById('debug-console');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            
+            const time = new Date().toLocaleTimeString();
+            let content = `<span class="log-time">[${time}]</span> ${msg}`;
+            
+            if (type === 'error') content = `<span class="log-time">[${time}]</span> <span class="log-error">${msg}</span>`;
+            if (type === 'success') content = `<span class="log-time">[${time}]</span> <span class="log-success">${msg}</span>`;
+            
+            entry.innerHTML = content;
+            consoleDiv.appendChild(entry);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight; // Auto-scroll
+            console.log(msg); // También a consola browser
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            logToScreen("Página cargada correctamente.");
+            logToScreen("Endpoint configurado: " + BODACONFIG.endpointRSVP);
+            
             document.getElementById('bankInfo').innerText = BODACONFIG.bankInfo;
             
             const params = new URLSearchParams(window.location.search);
@@ -300,6 +347,7 @@
                 const welcome = document.getElementById('welcome-message');
                 welcome.innerHTML = `Hola <strong>${invitado}</strong>, hemos reservado pases para ti.`;
                 welcome.classList.remove('hidden');
+                logToScreen(`Invitado detectado por URL: ${invitado}`);
             }
 
             if (pasesUrl && !isNaN(pasesUrl)) {
@@ -362,31 +410,30 @@
             const text = document.getElementById('btnText');
             
             btn.disabled = true; text.classList.add('hidden'); loader.classList.remove('hidden');
+            logToScreen("Iniciando envío de formulario...");
 
             const formData = new FormData(e.target);
-            // Convert to URLSearchParams for x-www-form-urlencoded
-            const params = new URLSearchParams();
-            for (const pair of formData.entries()) {
-                params.append(pair[0], pair[1]);
-            }
+            const data = Object.fromEntries(formData.entries());
             
             // Ajustar lógica
-            if(!toggle.checked) { 
-                params.set('pases', '0'); 
-                params.set('asistencia', 'No'); 
-            } else { 
-                params.set('asistencia', 'Si'); 
-                params.set('pases', document.getElementById('pases').value); 
-            }
+            if(!toggle.checked) { data.pases = 0; data.asistencia = "No"; } 
+            else { data.asistencia = "Si"; data.pases = document.getElementById('pases').value; }
+
+            logToScreen("Datos a enviar: " + JSON.stringify(data));
 
             try {
                 // INTENTO: Enviar como formulario clásico pero vía fetch no-cors
                 // Esto llega a Google Apps Script como e.parameter
+                logToScreen("Iniciando Fetch a Google Apps Script...");
+                
                 await fetch(BODACONFIG.endpointRSVP, {
                     method: 'POST',
-                    body: params, // URLSearchParams se envía automáticamente como x-www-form-urlencoded
-                    mode: 'no-cors'
+                    body: JSON.stringify(data),
+                    mode: 'no-cors',
+                    headers: { "Content-Type": "text/plain;charset=utf-8" }
                 });
+                
+                logToScreen("Fetch completado (no-cors). Asumiendo éxito.", "success");
                 
                 // Con no-cors asumimos éxito si sale de aquí
                 document.getElementById('rsvpForm').classList.add('hidden');
@@ -394,35 +441,31 @@
                 Swal.fire({ icon: 'success', title: '¡Confirmado!', text: 'Gracias por acompañarnos.', confirmButtonColor: '#D4AF37' });
 
             } catch (error) {
+                logToScreen("ERROR CAPTURADO EN CATCH: " + error.message, "error");
                 console.error("Fallo fetch, activando Plan B WhatsApp", error);
                 
-                // PLAN B: WHATSAPP
-                const data = Object.fromEntries(formData.entries()); // Reconstruir objeto para el mensaje
-                const mensajeWA = `Hola! Soy ${data.nombre}. Quiero confirmar mi asistencia a la boda. \n` +
-                                  `Personas: ${data.pases || document.getElementById('pases').value}\n` +
-                                  `Asistiré: ${toggle.checked ? 'Si' : 'No'}\n` +
-                                  `Menú: ${data.menu}\n` +
-                                  `Alergias: ${data.alergias}\n` +
-                                  `Mensaje: ${data.mensaje}`;
-                
-                const urlWA = `https://wa.me/${BODACONFIG.telefonoNovios}?text=${encodeURIComponent(mensajeWA)}`;
-                
+                // Construir mensaje de error para mostrar al usuario
+                let errorMsg = error.message;
+                if(error.stack) errorMsg += "\nStack: " + error.stack;
+
                 Swal.fire({
-                    icon: 'warning',
-                    title: 'No pudimos conectar con el servidor',
-                    text: 'Pero no te preocupes, puedes confirmar directamente por WhatsApp.',
+                    icon: 'error',
+                    title: 'Error de Conexión',
+                    html: `No pudimos conectar con el servidor.<br><br><b>Detalle técnico:</b><br><code style="font-size:0.8em; color:red;">${errorMsg}</code><br><br>Por favor intenta de nuevo o confirma por WhatsApp.`,
                     showCancelButton: true,
                     confirmButtonText: 'Confirmar por WhatsApp',
-                    cancelButtonText: 'Intentar de nuevo',
+                    cancelButtonText: 'Cerrar',
                     confirmButtonColor: '#25D366', // Color WhatsApp
                     cancelButtonColor: '#D4AF37'
                 }).then((result) => {
                     if (result.isConfirmed) {
+                        const mensajeWA = `Hola! Soy ${data.nombre}. Quiero confirmar asistencia. \n` +
+                                          `Personas: ${data.pases}\nAsistiré: ${data.asistencia}`;
+                        const urlWA = `https://wa.me/${BODACONFIG.telefonoNovios}?text=${encodeURIComponent(mensajeWA)}`;
                         window.open(urlWA, '_blank');
-                    } else {
-                        // Resetear botón para reintentar
-                        btn.disabled = false; text.classList.remove('hidden'); loader.classList.add('hidden');
                     }
+                    // Resetear botón para reintentar
+                    btn.disabled = false; text.classList.remove('hidden'); loader.classList.add('hidden');
                 });
             }
         });
