@@ -58,25 +58,6 @@
         #flower-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: hidden; }
         .flower { position: absolute; top: -50px; background: linear-gradient(135deg, #f5f5f5, #b0b0b0); border-radius: 50% 0 50% 0; box-shadow: 1px 1px 3px rgba(0,0,0,0.2); opacity: 0.8; animation-name: fall; animation-timing-function: linear; animation-iteration-count: infinite; }
         @keyframes fall { 0% { transform: translateY(0) rotate(0deg) translateX(0); opacity: 0; } 20% { opacity: 0.9; transform: translateY(20vh) rotate(45deg) translateX(20px); } 40% { transform: translateY(40vh) rotate(90deg) translateX(-20px); } 60% { transform: translateY(60vh) rotate(135deg) translateX(20px); } 80% { transform: translateY(80vh) rotate(180deg) translateX(-20px); } 100% { transform: translateY(110vh) rotate(225deg) translateX(0px); opacity: 0; } }
-        
-        /* Estilos para el Log de Debug */
-        #debug-console {
-            background-color: #1a1a1a;
-            color: #00ff00;
-            font-family: 'Courier New', Courier, monospace;
-            padding: 20px;
-            margin: 20px;
-            border-radius: 8px;
-            font-size: 12px;
-            max-height: 300px;
-            overflow-y: auto;
-            border: 2px solid #333;
-            display: none; /* Oculto por defecto */
-        }
-        .log-entry { margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 2px; }
-        .log-time { color: #888; margin-right: 10px; }
-        .log-error { color: #ff4444; font-weight: bold; }
-        .log-success { color: #00ff00; font-weight: bold; }
     </style>
 </head>
 <body class="font-sans text-gray-700 bg-stone-50 antialiased overflow-x-hidden selection:bg-gold-400 selection:text-white">
@@ -94,10 +75,12 @@
             novios: "Josefina & Fernando",
             fecha: "2026-11-22T16:00:00", 
             ubicacionLink: "https://goo.gl/maps/tu-ubicacion", 
-            // URL DE APPS SCRIPT
-            endpointRSVP: "https://script.google.com/macros/s/AKfycbxGG92_X8P6WfGHiHVbLtBV4-0LCsExevNd2oC9FsdsE_yyD5NRCSqiupz0nd0gQnnh/exec", 
+            
+            // TU URL DE FORMSPREE
+            endpointFormspree: "https://formspree.io/f/mwvlqawb", 
+            
             bankInfo: "Banco X | CLABE: 123456789012345678",
-            telefonoNovios: "525512345678" // Para el fallback de WhatsApp (cambiar por el real)
+            telefonoNovios: "525512345678" // Tu número (ej: 521...)
         };
     </script>
 
@@ -166,7 +149,6 @@
                 <p class="text-center text-sm text-gray-500 mt-2 italic">Nuestro Save the Date</p>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <!-- Fotos placeholder -->
                 <div class="group relative overflow-hidden rounded-lg cursor-pointer fade-in-section h-64 md:h-80" onclick="openLightbox('https://images.unsplash.com/photo-1519225448526-722609e8b240?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80')">
                     <img src="https://images.unsplash.com/photo-1519225448526-722609e8b240?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80" class="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110">
                     <div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100"><i data-lucide="zoom-in" class="text-white w-8 h-8"></i></div>
@@ -249,7 +231,9 @@
             </div>
 
             <form id="rsvpForm" class="space-y-6">
-                <input type="hidden" name="source" value="web_invite">
+                <!-- Inputs ocultos requeridos por Formspree (Anti-Spam) -->
+                <input type="text" name="_gotcha" style="display:none">
+                
                 <div><label class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label><input type="text" id="nombre" name="nombre" required placeholder="Tu nombre y apellido" class="w-full border-gray-300 rounded-md shadow-sm focus:border-gold-400 focus:ring focus:ring-gold-200 p-3 border"></div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div><label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label><input type="tel" name="telefono" required placeholder="55 1234 5678" class="w-full border-gray-300 rounded-md shadow-sm focus:border-gold-400 focus:ring focus:ring-gold-200 p-3 border"></div>
@@ -258,10 +242,11 @@
                 <div class="flex items-center gap-4 py-2">
                     <span class="text-sm font-medium text-gray-700">¿Asistirás?</span>
                     <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="asistenciaToggle" name="asistencia" class="sr-only peer" checked>
+                        <input type="checkbox" id="asistenciaToggle" name="asistencia_check" class="sr-only peer" checked>
                         <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-gold-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold-400"></div>
                         <span class="ml-3 text-sm font-medium text-gray-900" id="asistenciaLabel">Sí, asistiré</span>
                     </label>
+                    <input type="hidden" name="asistencia" id="asistenciaInput" value="Sí">
                 </div>
                 <div id="detallesAsistencia" class="space-y-6 transition-all duration-300">
                     <div class="bg-white p-4 rounded-lg border border-stone-200">
@@ -279,7 +264,11 @@
                     <div><label class="block text-sm font-medium text-gray-700 mb-1">Alergias o Restricciones</label><input type="text" name="alergias" placeholder="Ej. Nueces, Mariscos..." class="w-full border-gray-300 rounded-md shadow-sm focus:border-gold-400 focus:ring focus:ring-gold-200 p-3 border"></div>
                 </div>
                 <div><label class="block text-sm font-medium text-gray-700 mb-1">Mensaje para los novios</label><textarea name="mensaje" rows="3" placeholder="Déjanos tus buenos deseos..." class="w-full border-gray-300 rounded-md shadow-sm focus:border-gold-400 focus:ring focus:ring-gold-200 p-3 border"></textarea></div>
-                <button type="submit" id="submitBtn" class="w-full bg-navy-900 text-white font-serif tracking-widest py-4 px-6 rounded-sm hover:bg-navy-800 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-1"><span id="btnText">ENVIAR CONFIRMACIÓN</span><div id="btnLoader" class="loader hidden"></div></button>
+                
+                <button type="submit" id="submitBtn" class="w-full bg-navy-900 text-white font-serif tracking-widest py-4 px-6 rounded-sm hover:bg-navy-800 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                    <span id="btnText">ENVIAR CONFIRMACIÓN</span>
+                    <div id="btnLoader" class="loader hidden"></div>
+                </button>
             </form>
 
             <div id="successMessage" class="hidden text-center py-8 animate-fade-in">
@@ -299,41 +288,13 @@
         <p class="font-script text-3xl text-gold-400 mb-4">Josefina & Fernando</p>
         <p class="text-sm tracking-widest uppercase mb-6">#BodaJosefinaYFer</p>
         <p class="text-xs">Hecho con ♥</p>
-        <!-- BOTÓN DEBUG -->
-        <button onclick="document.getElementById('debug-console').style.display = 'block'" class="text-xs text-white/20 mt-4 hover:text-white/50 underline">Ver Log de Errores</button>
     </footer>
-
-    <!-- CONSOLA DEBUG -->
-    <div id="debug-console">
-        <div class="log-entry">--- INICIO DEL LOG ---</div>
-    </div>
 
     <!-- LOGICA -->
     <script>
         lucide.createIcons();
 
-        // FUNCIÓN LOGGING
-        function logToScreen(msg, type = 'info') {
-            const consoleDiv = document.getElementById('debug-console');
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            
-            const time = new Date().toLocaleTimeString();
-            let content = `<span class="log-time">[${time}]</span> ${msg}`;
-            
-            if (type === 'error') content = `<span class="log-time">[${time}]</span> <span class="log-error">${msg}</span>`;
-            if (type === 'success') content = `<span class="log-time">[${time}]</span> <span class="log-success">${msg}</span>`;
-            
-            entry.innerHTML = content;
-            consoleDiv.appendChild(entry);
-            consoleDiv.scrollTop = consoleDiv.scrollHeight; // Auto-scroll
-            console.log(msg); // También a consola browser
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
-            logToScreen("Página cargada correctamente.");
-            logToScreen("Endpoint configurado: " + BODACONFIG.endpointRSVP);
-            
             document.getElementById('bankInfo').innerText = BODACONFIG.bankInfo;
             
             const params = new URLSearchParams(window.location.search);
@@ -347,7 +308,6 @@
                 const welcome = document.getElementById('welcome-message');
                 welcome.innerHTML = `Hola <strong>${invitado}</strong>, hemos reservado pases para ti.`;
                 welcome.classList.remove('hidden');
-                logToScreen(`Invitado detectado por URL: ${invitado}`);
             }
 
             if (pasesUrl && !isNaN(pasesUrl)) {
@@ -365,7 +325,6 @@
             createFallingFlowers();
         });
 
-        // --- LLUVIA DE FLORES ---
         function createFallingFlowers() {
             const container = document.getElementById('flower-container');
             const flowerCount = 25;
@@ -383,7 +342,6 @@
             }
         }
 
-        // --- RSVP + PLAN B WHATSAPP ---
         const btnMinus = document.getElementById('btn-minus');
         const btnPlus = document.getElementById('btn-plus');
         const display = document.getElementById('pases-display');
@@ -397,80 +355,98 @@
         const toggle = document.getElementById('asistenciaToggle');
         const detalles = document.getElementById('detallesAsistencia');
         const label = document.getElementById('asistenciaLabel');
+        const inputAsistencia = document.getElementById('asistenciaInput');
 
         toggle.addEventListener('change', (e) => {
-            if (e.target.checked) { label.innerText = "Sí, asistiré"; detalles.classList.remove('opacity-50', 'pointer-events-none'); }
-            else { label.innerText = "No podré asistir"; detalles.classList.add('opacity-50', 'pointer-events-none'); }
+            if (e.target.checked) { 
+                label.innerText = "Sí, asistiré"; 
+                detalles.classList.remove('opacity-50', 'pointer-events-none');
+                inputAsistencia.value = "Sí";
+            } else { 
+                label.innerText = "No podré asistir"; 
+                detalles.classList.add('opacity-50', 'pointer-events-none');
+                inputAsistencia.value = "No";
+            }
         });
 
+        // --- MANEJO INTELIGENTE (FORMSPREE + FALLBACK WHATSAPP) ---
         document.getElementById('rsvpForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // Si no hay endpoint configurado, usar WhatsApp directamente
+            if (!BODACONFIG.endpointFormspree) {
+                enviarPorWhatsApp();
+                return;
+            }
+
             const btn = document.getElementById('submitBtn');
             const loader = document.getElementById('btnLoader');
             const text = document.getElementById('btnText');
             
             btn.disabled = true; text.classList.add('hidden'); loader.classList.remove('hidden');
-            logToScreen("Iniciando envío de formulario...");
 
             const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
             
-            // Ajustar lógica
-            if(!toggle.checked) { data.pases = 0; data.asistencia = "No"; } 
-            else { data.asistencia = "Si"; data.pases = document.getElementById('pases').value; }
-
-            logToScreen("Datos a enviar: " + JSON.stringify(data));
+            // Ajustar lógica manual si no asiste
+            if(!toggle.checked) { 
+                formData.set('pases', '0'); 
+            }
 
             try {
-                // INTENTO: Enviar como formulario clásico pero vía fetch no-cors
-                // Esto llega a Google Apps Script como e.parameter
-                logToScreen("Iniciando Fetch a Google Apps Script...");
-                
-                await fetch(BODACONFIG.endpointRSVP, {
+                const response = await fetch(BODACONFIG.endpointFormspree, {
                     method: 'POST',
-                    body: JSON.stringify(data),
-                    mode: 'no-cors',
-                    headers: { "Content-Type": "text/plain;charset=utf-8" }
+                    body: formData,
+                    headers: { 'Accept': 'application/json' }
                 });
                 
-                logToScreen("Fetch completado (no-cors). Asumiendo éxito.", "success");
-                
-                // Con no-cors asumimos éxito si sale de aquí
-                document.getElementById('rsvpForm').classList.add('hidden');
-                document.getElementById('successMessage').classList.remove('hidden');
-                Swal.fire({ icon: 'success', title: '¡Confirmado!', text: 'Gracias por acompañarnos.', confirmButtonColor: '#D4AF37' });
+                if (response.ok) {
+                    document.getElementById('rsvpForm').classList.add('hidden');
+                    document.getElementById('successMessage').classList.remove('hidden');
+                    Swal.fire({ icon: 'success', title: '¡Confirmado!', text: 'Gracias por acompañarnos.', confirmButtonColor: '#D4AF37' });
+                } else {
+                    throw new Error("Formspree error");
+                }
 
             } catch (error) {
-                logToScreen("ERROR CAPTURADO EN CATCH: " + error.message, "error");
-                console.error("Fallo fetch, activando Plan B WhatsApp", error);
-                
-                // Construir mensaje de error para mostrar al usuario
-                let errorMsg = error.message;
-                if(error.stack) errorMsg += "\nStack: " + error.stack;
-
+                console.error(error);
+                // Si falla Formspree, ofrecer WhatsApp
                 Swal.fire({
-                    icon: 'error',
-                    title: 'Error de Conexión',
-                    html: `No pudimos conectar con el servidor.<br><br><b>Detalle técnico:</b><br><code style="font-size:0.8em; color:red;">${errorMsg}</code><br><br>Por favor intenta de nuevo o confirma por WhatsApp.`,
+                    icon: 'warning',
+                    title: 'Hubo un detalle técnico',
+                    text: 'No pudimos conectar con la lista, pero puedes confirmar por WhatsApp.',
                     showCancelButton: true,
                     confirmButtonText: 'Confirmar por WhatsApp',
                     cancelButtonText: 'Cerrar',
-                    confirmButtonColor: '#25D366', // Color WhatsApp
+                    confirmButtonColor: '#25D366',
                     cancelButtonColor: '#D4AF37'
                 }).then((result) => {
-                    if (result.isConfirmed) {
-                        const mensajeWA = `Hola! Soy ${data.nombre}. Quiero confirmar asistencia. \n` +
-                                          `Personas: ${data.pases}\nAsistiré: ${data.asistencia}`;
-                        const urlWA = `https://wa.me/${BODACONFIG.telefonoNovios}?text=${encodeURIComponent(mensajeWA)}`;
-                        window.open(urlWA, '_blank');
-                    }
-                    // Resetear botón para reintentar
+                    if (result.isConfirmed) enviarPorWhatsApp();
                     btn.disabled = false; text.classList.remove('hidden'); loader.classList.add('hidden');
                 });
             }
         });
 
-        // --- LIGHTBOX & CALENDAR ---
+        function enviarPorWhatsApp() {
+            const formData = new FormData(document.getElementById('rsvpForm'));
+            const data = Object.fromEntries(formData.entries());
+            
+            const pases = toggle.checked ? (data.pases || document.getElementById('pases').value) : "0";
+            const asistencia = toggle.checked ? "SÍ ASISTIRÉ" : "NO ASISTIRÉ";
+            const menu = toggle.checked ? data.menu : "N/A";
+            const alergias = data.alergias || "Ninguna";
+            const mensaje = data.mensaje || "";
+
+            const texto = `Hola! Soy *${data.nombre}*.\n\n` +
+                          `Quiero confirmar mi asistencia a la boda: \n` +
+                          `✅ *${asistencia}*\n` +
+                          `👥 Personas: *${pases}*\n` +
+                          `🍽️ Menú: ${menu}\n` +
+                          `⚠️ Alergias: ${alergias}\n` +
+                          `💌 Mensaje: ${mensaje}`;
+            
+            window.open(`https://wa.me/${BODACONFIG.telefonoNovios}?text=${encodeURIComponent(texto)}`, '_blank');
+        }
+
         const lightbox = document.getElementById('lightbox');
         const lightboxImg = document.getElementById('lightboxImg');
         const closeLightbox = document.getElementById('closeLightbox');
