@@ -158,7 +158,7 @@
             ubicacionLink: "https://goo.gl/maps/tu-ubicacion", 
             
             // !!! AQUÍ PEGAS LA URL QUE OBTUVISTE AL DESPLEGAR EL APPS SCRIPT !!!
-            endpointRSVP: "https://script.google.com/macros/s/AKfycbwSLs9EF4b8z9UMOaRcNkrVh56e5MozXo1GxBUdubiVNLj95GqeD-jdXc3cekqBEBbD/exec", 
+            endpointRSVP: "https://script.google.com/macros/s/AKfycbxGG92_X8P6WfGHiHVbLtBV4-0LCsExevNd2oC9FsdsE_yyD5NRCSqiupz0nd0gQnnh/exec", 
             
             // Datos para copiar al portapapeles
             bankInfo: "Banco X | CLABE: 123456789012345678"
@@ -669,8 +669,7 @@
                 await fetch(BODACONFIG.endpointRSVP, {
                     method: 'POST', 
                     body: formParams, // Enviamos como formulario, no como JSON string
-                    mode: 'no-cors',  // Importante: evita errores de CORS
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" }
+                    mode: 'no-cors'  // Importante: evita errores de CORS
                 });
                 
                 // Con no-cors no podemos leer la respuesta, así que asumimos éxito si no hay error de red
@@ -785,7 +784,7 @@ END:VCALENDAR`;
                 audio.pause(); 
                 musicBtn.innerHTML = '<i data-lucide="music" class="w-6 h-6"></i>'; 
                 musicBtn.classList.remove('bg-gold-600'); 
-                musicBtn.classList.add('bg-gold-400'); 
+                musicBtn.classList.add('bg-gold-600'); 
             } else { 
                 audio.play(); 
                 musicBtn.innerHTML = '<i data-lucide="pause" class="w-6 h-6"></i>'; 
