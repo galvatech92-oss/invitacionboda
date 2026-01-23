@@ -75,7 +75,7 @@
             novios: "Josefina & Fernando",
             fecha: "2026-11-22T16:00:00", 
             ubicacionLink: "https://goo.gl/maps/tu-ubicacion", 
-            // URL DE APPS SCRIPT
+            // URL DE APPS SCRIPT ACTUALIZADA (LA NUEVA QUE PASASTE)
             endpointRSVP: "https://script.google.com/macros/s/AKfycbxGG92_X8P6WfGHiHVbLtBV4-0LCsExevNd2oC9FsdsE_yyD5NRCSqiupz0nd0gQnnh/exec", 
             bankInfo: "Banco X | CLABE: 123456789012345678",
             telefonoNovios: "525512345678" // Para el fallback de WhatsApp (cambiar por el real)
@@ -364,22 +364,31 @@
             btn.disabled = true; text.classList.add('hidden'); loader.classList.remove('hidden');
 
             const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
+            // Convert to URLSearchParams for x-www-form-urlencoded
+            const params = new URLSearchParams();
+            for (const pair of formData.entries()) {
+                params.append(pair[0], pair[1]);
+            }
             
             // Ajustar lógica
-            if(!toggle.checked) { data.pases = 0; data.asistencia = "No"; } 
-            else { data.asistencia = "Si"; data.pases = document.getElementById('pases').value; }
+            if(!toggle.checked) { 
+                params.set('pases', '0'); 
+                params.set('asistencia', 'No'); 
+            } else { 
+                params.set('asistencia', 'Si'); 
+                params.set('pases', document.getElementById('pases').value); 
+            }
 
             try {
-                // INTENTO 1: Fetch normal con truco JSON Text
+                // INTENTO: Enviar como formulario clásico pero vía fetch no-cors
+                // Esto llega a Google Apps Script como e.parameter
                 await fetch(BODACONFIG.endpointRSVP, {
                     method: 'POST',
-                    body: JSON.stringify(data),
-                    mode: 'no-cors',
-                    headers: { "Content-Type": "text/plain;charset=utf-8" }
+                    body: params, // URLSearchParams se envía automáticamente como x-www-form-urlencoded
+                    mode: 'no-cors'
                 });
                 
-                // Si llegamos aquí, asumimos éxito (no-cors no da status, pero si falla red tira catch)
+                // Con no-cors asumimos éxito si sale de aquí
                 document.getElementById('rsvpForm').classList.add('hidden');
                 document.getElementById('successMessage').classList.remove('hidden');
                 Swal.fire({ icon: 'success', title: '¡Confirmado!', text: 'Gracias por acompañarnos.', confirmButtonColor: '#D4AF37' });
@@ -388,9 +397,10 @@
                 console.error("Fallo fetch, activando Plan B WhatsApp", error);
                 
                 // PLAN B: WHATSAPP
+                const data = Object.fromEntries(formData.entries()); // Reconstruir objeto para el mensaje
                 const mensajeWA = `Hola! Soy ${data.nombre}. Quiero confirmar mi asistencia a la boda. \n` +
-                                  `Personas: ${data.pases}\n` +
-                                  `Asistiré: ${data.asistencia}\n` +
+                                  `Personas: ${data.pases || document.getElementById('pases').value}\n` +
+                                  `Asistiré: ${toggle.checked ? 'Si' : 'No'}\n` +
                                   `Menú: ${data.menu}\n` +
                                   `Alergias: ${data.alergias}\n` +
                                   `Mensaje: ${data.mensaje}`;
