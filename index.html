@@ -77,7 +77,8 @@
             ubicacionLink: "https://goo.gl/maps/tu-ubicacion", 
             // URL DE APPS SCRIPT
             endpointRSVP: "https://script.google.com/macros/s/AKfycbxGG92_X8P6WfGHiHVbLtBV4-0LCsExevNd2oC9FsdsE_yyD5NRCSqiupz0nd0gQnnh/exec", 
-            bankInfo: "Banco X | CLABE: 123456789012345678"
+            bankInfo: "Banco X | CLABE: 123456789012345678",
+            telefonoNovios: "525512345678" // Para el fallback de WhatsApp (cambiar por el real)
         };
     </script>
 
@@ -334,7 +335,7 @@
             }
         }
 
-        // --- RSVP ---
+        // --- RSVP + PLAN B WHATSAPP ---
         const btnMinus = document.getElementById('btn-minus');
         const btnPlus = document.getElementById('btn-plus');
         const display = document.getElementById('pases-display');
@@ -354,7 +355,6 @@
             else { label.innerText = "No podré asistir"; detalles.classList.add('opacity-50', 'pointer-events-none'); }
         });
 
-        // --- MANEJO DE FORMULARIO SIN JSON (ESTRATEGIA URLSearchParams) ---
         document.getElementById('rsvpForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
@@ -364,38 +364,56 @@
             btn.disabled = true; text.classList.add('hidden'); loader.classList.remove('hidden');
 
             const formData = new FormData(e.target);
-            // Convertimos a URLSearchParams para que Apps Script lo reciba como parámetros nativos
-            const data = new URLSearchParams();
-            for (const pair of formData.entries()) {
-                data.append(pair[0], pair[1]);
-            }
+            const data = Object.fromEntries(formData.entries());
             
-            // Lógica manual
-            if(!toggle.checked) { 
-                data.set('asistencia', 'No');
-                data.set('pases', '0');
-            } else { 
-                data.set('asistencia', 'Si');
-                data.set('pases', document.getElementById('pases').value);
-            }
+            // Ajustar lógica
+            if(!toggle.checked) { data.pases = 0; data.asistencia = "No"; } 
+            else { data.asistencia = "Si"; data.pases = document.getElementById('pases').value; }
 
             try {
-                // Enviamos sin Headers raros para que el navegador lo trate como form normal
+                // INTENTO 1: Fetch normal con truco JSON Text
                 await fetch(BODACONFIG.endpointRSVP, {
                     method: 'POST',
-                    body: data, 
-                    mode: 'no-cors' 
+                    body: JSON.stringify(data),
+                    mode: 'no-cors',
+                    headers: { "Content-Type": "text/plain;charset=utf-8" }
                 });
                 
-                // Exito
+                // Si llegamos aquí, asumimos éxito (no-cors no da status, pero si falla red tira catch)
                 document.getElementById('rsvpForm').classList.add('hidden');
                 document.getElementById('successMessage').classList.remove('hidden');
                 Swal.fire({ icon: 'success', title: '¡Confirmado!', text: 'Gracias por acompañarnos.', confirmButtonColor: '#D4AF37' });
 
             } catch (error) {
-                console.error(error);
-                Swal.fire({ icon: 'error', title: 'Error', text: 'Intenta de nuevo.', confirmButtonColor: '#D4AF37' });
-                btn.disabled = false; text.classList.remove('hidden'); loader.classList.add('hidden');
+                console.error("Fallo fetch, activando Plan B WhatsApp", error);
+                
+                // PLAN B: WHATSAPP
+                const mensajeWA = `Hola! Soy ${data.nombre}. Quiero confirmar mi asistencia a la boda. \n` +
+                                  `Personas: ${data.pases}\n` +
+                                  `Asistiré: ${data.asistencia}\n` +
+                                  `Menú: ${data.menu}\n` +
+                                  `Alergias: ${data.alergias}\n` +
+                                  `Mensaje: ${data.mensaje}`;
+                
+                const urlWA = `https://wa.me/${BODACONFIG.telefonoNovios}?text=${encodeURIComponent(mensajeWA)}`;
+                
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No pudimos conectar con el servidor',
+                    text: 'Pero no te preocupes, puedes confirmar directamente por WhatsApp.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Confirmar por WhatsApp',
+                    cancelButtonText: 'Intentar de nuevo',
+                    confirmButtonColor: '#25D366', // Color WhatsApp
+                    cancelButtonColor: '#D4AF37'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.open(urlWA, '_blank');
+                    } else {
+                        // Resetear botón para reintentar
+                        btn.disabled = false; text.classList.remove('hidden'); loader.classList.add('hidden');
+                    }
+                });
             }
         });
 
