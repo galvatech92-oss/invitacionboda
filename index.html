@@ -644,26 +644,36 @@
             loader.classList.remove('hidden');
 
             const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
             
-            // Ajustar lógica de asistencia
+            // --- CAMBIO IMPORTANTE: Usamos URLSearchParams en lugar de JSON ---
+            // Esto es mucho más robusto para Google Apps Script
+            const formParams = new URLSearchParams();
+            
+            // Agregamos todos los campos del formulario
+            for (const pair of formData.entries()) {
+                formParams.append(pair[0], pair[1]);
+            }
+
+            // Lógica manual para asegurar que los campos "especiales" vayan bien
             if(!toggle.checked) { 
-                data.pases = 0; 
-                data.asistencia = "No"; 
+                formParams.set("pases", "0"); 
+                formParams.set("asistencia", "No"); 
             } else { 
-                data.asistencia = "Si"; 
+                formParams.set("asistencia", "Si"); 
+                // Aseguramos que el valor de pases sea el correcto
+                formParams.set("pases", document.getElementById('pases').value);
             }
 
             // ENVÍO A GOOGLE SHEETS
             try {
                 await fetch(BODACONFIG.endpointRSVP, {
                     method: 'POST', 
-                    body: JSON.stringify(data),
-                    mode: 'no-cors', // <--- AGREGADO: Importante para evitar errores de CORS con Google
-                    headers: { "Content-Type": "text/plain;charset=utf-8" }
+                    body: formParams, // Enviamos como formulario, no como JSON string
+                    mode: 'no-cors',  // Importante: evita errores de CORS
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" }
                 });
                 
-                // Éxito (Al usar no-cors, asumimos éxito si no hay error de red)
+                // Con no-cors no podemos leer la respuesta, así que asumimos éxito si no hay error de red
                 document.getElementById('rsvpForm').classList.add('hidden');
                 document.getElementById('welcome-message').classList.add('hidden');
                 document.getElementById('successMessage').classList.remove('hidden');
