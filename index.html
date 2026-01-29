@@ -239,17 +239,15 @@
         .animate-reel {
             animation: reel-move 20s linear infinite;
         }
-        .animate-reel:hover {
-            animation-play-state: paused;
-        }
+        /* ELIMINADO HOVER: Para que no se detenga al tocar */
+        /* .animate-reel:hover { animation-play-state: paused; } */
 
         /* --- ANIMACIÓN REEL LENTO GALERÍA --- */
         .animate-reel-slow {
             animation: reel-move 45s linear infinite;
         }
-        .animate-reel-slow:hover {
-            animation-play-state: paused;
-        }
+        /* ELIMINADO HOVER: Para que no se detenga al tocar */
+        /* .animate-reel-slow:hover { animation-play-state: paused; } */
 
         /* --- CORAZONES SALIENDO DE LAS FOTOS --- */
         @keyframes heart-emit {
@@ -364,7 +362,8 @@
                         <i data-lucide="glass-water" class="w-8 h-8 text-gold-600 transition-colors"></i>
                     </div>
                     <h3 class="font-serif text-2xl mb-2 transition-colors">Recepción</h3>
-                    <p class="text-gold-600 font-bold mb-4 time-badge">5:30 PM</p>
+                    <!-- HORA MODIFICADA -->
+                    <p class="text-gold-600 font-bold mb-4 time-badge">5:00 PM</p>
                     <p class="text-gray-400 text-xs italic transition-colors">Ver ubicación abajo</p>
                 </div>
 
@@ -373,7 +372,8 @@
                         <i data-lucide="church" class="w-8 h-8 text-gold-600 transition-colors"></i>
                     </div>
                     <h3 class="font-serif text-2xl mb-2 transition-colors">Ceremonia de Unión</h3>
-                    <p class="text-gold-600 font-bold mb-4 time-badge">6:00 PM</p>
+                    <!-- HORA MODIFICADA -->
+                    <p class="text-gold-600 font-bold mb-4 time-badge">5:30 PM</p>
                     <p class="text-gray-400 text-xs italic transition-colors">Ver ubicación abajo</p>
                 </div>
 
@@ -382,7 +382,8 @@
                         <i data-lucide="utensils" class="w-8 h-8 text-gold-600 transition-colors"></i>
                     </div>
                     <h3 class="font-serif text-2xl mb-2 transition-colors">Cena Familiar</h3>
-                    <p class="text-gold-600 font-bold mb-4 time-badge">8:00 PM</p>
+                    <!-- HORA MODIFICADA -->
+                    <p class="text-gold-600 font-bold mb-4 time-badge">8:30 PM</p>
                     <p class="text-gray-400 text-xs italic transition-colors">Ver ubicación abajo</p>
                 </div>
 
@@ -461,6 +462,18 @@
                     </div>
                 </div>
             </div>
+
+            <!-- NUEVA SECCIÓN DE VIDEO -->
+            <div class="max-w-4xl mx-auto mt-16 px-4 fade-in-section text-center">
+                <h3 class="font-serif text-2xl text-navy-900 mb-6">Nuestra Historia en Video</h3>
+                <div class="relative rounded-lg overflow-hidden border-4 border-gold-400 shadow-2xl">
+                    <video id="weddingVideo" controls class="w-full h-auto bg-black">
+                        <source src="VIDEO.mp4" type="video/mp4">
+                        Tu navegador no soporta la reproducción de video.
+                    </video>
+                </div>
+            </div>
+
         </div>
     </section>
 
@@ -574,6 +587,7 @@
             setupItineraryHighlight();
             createGalleryBackgroundHearts();
             setupCalendarButtons(); // NEW
+            setupVideoControl(); // Nuevo control de video
         });
 
         // --- NEW CALENDAR LOGIC ---
@@ -650,6 +664,29 @@ END:VCALENDAR`;
                 const size = Math.random() * 2 + 0.5;
                 el.style.transform = `scale(${size})`;
                 container.appendChild(el);
+            }
+        }
+
+        // --- NUEVA LÓGICA PARA CONTROLAR EL VIDEO Y EL AUDIO ---
+        function setupVideoControl() {
+            const video = document.getElementById('weddingVideo');
+            const audio = document.getElementById('bgMusic');
+            
+            if (video && audio) {
+                video.addEventListener('play', () => {
+                    audio.pause();
+                    // Actualizar UI del botón de corazón a "pausado" (mostrar icono play)
+                    const heartIcon = document.getElementById('heartIcon');
+                    const statusContainer = document.getElementById('statusContainer');
+                    if(heartIcon) {
+                        heartIcon.classList.remove('heart-beat-active', 'text-red-500', 'fill-red-500');
+                        heartIcon.classList.add('fill-current');
+                    }
+                    if(statusContainer) {
+                        statusContainer.innerHTML = `<i data-lucide="play" class="w-3 h-3 fill-white"></i>`;
+                        lucide.createIcons({ root: statusContainer });
+                    }
+                });
             }
         }
 
